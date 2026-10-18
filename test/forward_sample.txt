@@ -1,0 +1,87 @@
+<div dir="ltr">
+    <div class="gmail_default" style="font-size:small"><br /></div><br />
+    <div class="gmail_quote gmail_quote_container">
+        <div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br />From: <strong
+                class="gmail_sendername" dir="auto">Google Scholar Alerts</strong> <span dir="auto">&lt;<a
+                    href="mailto:scholaralerts-noreply@google.com">scholaralerts-noreply@google.com</a>&gt;</span><br />Date:
+            Wed, Oct 14, 2026 at 2:04 PM<br />Subject: XXXXXX - new related research<br />To: &lt;<a
+                href="mailto:AwesomeUser@gmail.com">AwesomeUser@gmail.com</a>&gt;<br /></div><br /><br />
+        <div class="msg3336164836461587816"><u></u>
+            <div>
+                <div
+                    style="font-family:arial,sans-serif;font-size:13px;line-height:16px;color:#222;width:100%;max-width:600px">
+                    <h3 style="font-weight:lighter;font-size:18px;line-height:20px"></h3>
+                    <h3 style="font-weight:normal;font-size:18px;line-height:20px"></h3>
+                    <h3 style="font-weight:normal;margin:0;font-size:17px;line-height:20px"><span
+                            style="font-size:11px;font-weight:bold;color:#1a0dab;vertical-align:2px">[HTML]</span> <a
+                            href="http://test.com/url1"
+                            class="m_3336164836461587816gse_alrt_title"
+                            style="font-size:17px;color:#1a0dab;line-height:22px" target="_blank">Title 1
+                            and The Rest</a></h3>
+                    <div style="color:#006621;line-height:18px">Awesome authors… -
+                        Jounal A, 2026</div>
+                    <div class="m_3336164836461587816gse_alrt_sni" style="line-height:17px">Description</div>
+                    <div style="width:auto">
+                        <table cellpadding="0" cellspacing="0" border="0" style="padding-top:4px">
+                            <tbody>
+                                <tr>
+                                    <td style="padding-right:4px"><a class="m_3336164836461587816gse_ra_btn"
+                                            href="http://link.com"
+                                            style="text-decoration:none;display:inline-block;line-height:17px;padding:4px 8px 4px 0;color:#1a0dab"
+                                            target="_blank"><img
+                                                src="https://scholar.google.com/intl/en/scholar/images/1x/save2-32.png"
+                                                border="0" height="17" width="17" style="vertical-align:top" /><span
+                                                style="vertical-align:top"> Save</span></a></td>
+                                    <td style="padding-right:4px"><a class="m_3336164836461587816gse_ra_btn_lact"
+                                            href="http://link.com"
+                                            style="text-decoration:none;display:inline-block;line-height:17px;padding:4px 8px;color:#1a0dab;background-color:#f0f4f9;border-radius:4px;padding-right:12px"
+                                            target="_blank"><img
+                                                src="https://scholar.google.com/intl/en/scholar/images/1x/ai_answers-32.png"
+                                                border="0" height="17" width="17" style="vertical-align:top" /><span
+                                                style="vertical-align:top"> Quick read</span></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div><br />
+                    <h3 style="font-weight:normal;margin:0;font-size:17px;line-height:20px"><a
+                            href="http://link.com"
+                            class="m_3336164836461587816gse_alrt_title"
+                            style="font-size:17px;color:#1a0dab;line-height:22px" target="_blank">Title 2
+                            Long Title</a></h3>
+                    <div style="color:#006621;line-height:18px">Authors好…, 2026</div>
+                    <div class="m_3336164836461587816gse_alrt_sni" style="line-height:17px">Description</div>
+                    <div style="width:auto">
+                        <table cellpadding="0" cellspacing="0" border="0" style="padding-top:4px">
+                            <tbody>
+                                <tr>
+                                    <td style="padding-right:4px"><a class="m_3336164836461587816gse_ra_btn"
+                                            href="http://link.com"
+                                            style="text-decoration:none;display:inline-block;line-height:17px;padding:4px 8px 4px 0;color:#1a0dab"
+                                            target="_blank"><img
+                                                src="https://scholar.google.com/intl/en/scholar/images/1x/save2-32.png"
+                                                border="0" height="17" width="17" style="vertical-align:top" /><span
+                                                style="vertical-align:top"> Save</span></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div><br />
+                    <div style="line-height:16px;border-top:1px solid #bdbdbd"> </div>
+                    <p style="margin:8px 0 16px 0;color:#666">This message was sent by Google Scholar because you're
+                        following new articles related to research by <a
+                            href="http://link.com"
+                            style="color:#1a0dab" target="_blank">John GoodFellow</a>.<img
+                            src="https://scholar.google.com/scholar_url?url=https://scholar.google.com/scholar/images/cleardot.gif&amp;hl=en&amp;sa=X&amp;ei=02_PatrAB9K2ieoPm6PRgQw&amp;scisig=ACTRDVEW5aBRhghCp-rB5JrFqLz1&amp;hist=gZrzAysAAAAJ:2478338521417401501:ACTRDVGp6n-CAjoTZlmRZa-CYnFY&amp;html=&amp;folt=rel&amp;lrrs=0,1"
+                            height="1" width="1" alt="" /></p>
+                    <div style="margin-bottom:8px">
+                        <div><a href="http://link.com"
+                                style="display:inline-block;text-decoration:none;font-family:arial,sans-serif;font-size:13px;font-size:11px;text-transform:uppercase;font-size:13px;line-height:21px;padding:3px 0;color:#1a0dab;border-top:1px solid transparent;border-bottom:1px solid transparent;border-radius:3px"
+                                target="_blank"><span>List alerts</span></a></div>
+                        <div><a href="http://link.com"
+                                style="display:inline-block;text-decoration:none;font-family:arial,sans-serif;font-size:13px;font-size:11px;text-transform:uppercase;font-size:13px;line-height:21px;padding:3px 0;color:#1a0dab;border-top:1px solid transparent;border-bottom:1px solid transparent;border-radius:3px"
+                                target="_blank"><span>Cancel alert</span></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
