@@ -1,46 +1,27 @@
-# gscholar_mail
+# Gscholar Mail
 
 Local application for ingesting Google Scholar alerts forwarded to a dedicated AgentMail inbox. The workflow is intentionally split: run the manual AgentMail sync first, then start the local web app to browse the SQLite databases. The web app does not perform synchronization.
 
-## Development setup
-
-Requires Python 3.11–3.13. Install runtime and development dependencies with:
-
-```powershell
-python -m pip install -e ".[dev]"
-```
-
-Run the tests with `pytest` (or, in a pixi checkout, `pixi run -e dev python -m pytest`), which uses the `dev` extra where `pytest` is installed.
-
-The legacy Gmail/Google Sheets service remains available only for migration reference and is not part of the default runtime. The migrated application must not request Gmail or Google OAuth access. Before cutover, revoke the old OAuth grant in Google Account → Security → Third-party connections, then securely delete local `token.json`, `credentials.json`, and any copied credentials from Drive or Colab after confirming they are no longer needed.
+## Installation
 
 Copy `.env.example` to `.env` and replace the AgentMail placeholder before running the migrated application. `load_settings()` automatically loads `.env` from the current project or working directory; explicitly set environment variables take precedence. Configuration is loaded from environment variables; `.env` is ignored by Git. The defaults bind the future web interface to `127.0.0.1` and keep publications and raw mail in separate SQLite files under `data/`.
-
-The legacy workbook import utility has been removed after migration. Keep a backup of the workbook and databases for rollback.
 
 Run ingestion and optionally start the local FastAPI app with:
 
 ```powershell
-python -m gscholar_mail
 python -m gscholar_mail --dry-run
 python -m gscholar_mail --app
 ```
 
 The CLI initializes both databases, runs one manual AgentMail ingestion, and starts the web app after ingestion when `--app` is provided. `--dry-run` performs no local writes or remote deletion.
 
-The intended workflow is:
-
-1. Run the manual AgentMail ingestion command.
-2. Start the local FastAPI web app against the SQLite databases, or use `--app` to do both.
-3. Browse publications in the browser; synchronization remains outside the web app.
-
-The web app never reads `mail.db` and does not require AgentMail credentials. It shows unread publications and lets the user mark them as read. To start only the web app, run:
-
-```powershell
+## Workflow
+1. Forward Google Scholar mails to AgentMail's inbox. (For example, use Gmail filter).
+2. Run the manual AgentMail ingestion command and start the local FastAPI web app.
+```
 python -m gscholar_mail --app
 ```
-
-Then open <http://127.0.0.1:8000/publications>. The list is paginated (`page`, `per_page`), and each publication has a detail page at `/publications/{id}`. Only `http(s)` links from email content are rendered as clickable anchors. Each row has a `✓` button that marks the publication as read without leaving the page; without JavaScript it falls back to a normal form post.
+3. Browse publications in the browser. Each row has a `✓` button that marks the publication as read without leaving the page. Synchronization remains outside the web app.
 
 ## MCP server
 
