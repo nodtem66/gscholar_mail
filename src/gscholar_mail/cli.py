@@ -10,7 +10,6 @@ from gscholar_mail.agentmail_client import AgentMailClient
 from gscholar_mail.config import load_settings
 from gscholar_mail.database import initialize_databases
 from gscholar_mail.ingestion import run_ingestion
-from gscholar_mail.web import create_app
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -49,6 +48,8 @@ def main() -> None:
     print(summary)
 
     if args.app:
+        from gscholar_mail.web import create_app
+
         uvicorn.run(
             create_app(settings.database_path),
             host=settings.bind_host,

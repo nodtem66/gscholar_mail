@@ -4,7 +4,7 @@ Local application for ingesting Google Scholar alerts forwarded to a dedicated A
 
 ## Installation
 
-Copy `.env.example` to `.env` and replace the AgentMail placeholder before running the migrated application. `load_settings()` automatically loads `.env` from the current project or working directory; explicitly set environment variables take precedence. Configuration is loaded from environment variables; `.env` is ignored by Git. The defaults bind the future web interface to `127.0.0.1` and keep publications and raw mail in separate SQLite files under `data/`.
+Copy `.env.example` to `.env`, set the AgentMail credentials, and choose a strong `DASHBOARD_PASSWORD` before running the application. The web dashboard requires this password; it loads `.env` from the current project or working directory, and explicitly set environment variables take precedence. After five failed login attempts from the same client address, that address is blocked for five minutes. `.env` is ignored by Git. The defaults bind the web interface to `127.0.0.1` and keep publications and raw mail in separate SQLite files under `data/`.
 
 Run ingestion and optionally start the local FastAPI app with:
 

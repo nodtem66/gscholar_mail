@@ -5,7 +5,12 @@ only the publication read state, never reads the mail database, and never
 triggers sync.
 """
 
+import hashlib
+import hmac
+import os
 import sqlite3
+import time
+from collections import OrderedDict
 from contextlib import closing
 from html import escape
 from math import ceil
@@ -19,19 +24,29 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from gscholar_mail.config import load_bind_address, load_publications_path
+from gscholar_mail.config import (
+    load_bind_address,
+    load_environment,
+    load_publications_path,
+)
 from gscholar_mail.publications import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
     READ_STATUS_READ,
     READ_STATUS_UNREAD,
     PublicationsDatabaseError,
-    count_unread as count_unread_papers,
     open_database,
     set_read_status,
 )
+from gscholar_mail.publications import (
+    count_unread as count_unread_papers,
+)
 
 PAGE_SIZES = (10, 25, 50, 100)
+LOGIN_PATH = "/login"
+LOGIN_FAILURE_LIMIT = 5
+LOGIN_COOLDOWN_SECONDS = 300
+LOGIN_CLIENT_LIMIT = 1024
 DATABASE_UNAVAILABLE = (
     "The publications database is unavailable. Run the ingestion command first "
     "and check DATABASE_PATH."
@@ -108,7 +123,15 @@ def _safe_external_url(value: str) -> str | None:
     return None
 
 
-def _layout(title: str, body: str, status_code: int = 200) -> HTMLResponse:
+def _layout(
+    title: str, body: str, status_code: int = 200, *, show_logout: bool = False
+) -> HTMLResponse:
+    header_action = (
+        '<form method="post" action="/logout"><button type="submit" '
+        'class="text-xs text-slate-300 hover:text-white">Sign out</button></form>'
+        if show_logout
+        else '<span class="text-xs text-slate-300">Unread publications</span>'
+    )
     document = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,7 +144,7 @@ def _layout(title: str, body: str, status_code: int = 200) -> HTMLResponse:
 <header class="bg-slate-900 text-white shadow">
 <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
 <a href="/publications" class="text-lg font-semibold">Publications</a>
-<span class="text-xs text-slate-300">Unread publications</span>
+{header_action}
 </div>
 </header>
 <main class="mx-auto max-w-5xl px-4 py-6">
@@ -252,13 +275,83 @@ def _render_detail(row: sqlite3.Row, csrf_token: str) -> str:
 """
 
 
+def _render_login(error: str = "") -> HTMLResponse:
+    error_html = (
+        f'<p class="mt-3 text-sm text-red-700" role="alert">{escape(error)}</p>'
+        if error
+        else ""
+    )
+    body = f"""
+<h1 class="text-2xl font-semibold">Sign in</h1>
+<p class="mt-1 text-sm text-slate-600">Enter the dashboard password to continue.</p>
+{error_html}
+<form method="post" action="{LOGIN_PATH}" class="mt-4 space-y-3">
+<label class="block text-sm font-medium" for="password">Password</label>
+<input id="password" name="password" type="password" required autocomplete="current-password" class="w-full rounded border border-slate-300 bg-white px-3 py-2">
+<button type="submit" class="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">Sign in</button>
+</form>
+"""
+    return _layout("Sign in", body)
+
+
 def create_app(publications_path: Path | None = None) -> FastAPI:
+    load_environment()
+    password = os.getenv("DASHBOARD_PASSWORD", "")
+    if not password:
+        raise ValueError("Missing required environment variable: DASHBOARD_PASSWORD")
+
     db_path = publications_path or load_publications_path()
     app = FastAPI(
         title="gscholar_mail", docs_url=None, redoc_url=None, openapi_url=None
     )
+    app.state.login_password_hash = hashlib.sha256(password.encode("utf-8")).digest()
+    app.state.login_failures = OrderedDict()
+    app.state.login_cooldown_seconds = LOGIN_COOLDOWN_SECONDS
 
     csrf_token = token_urlsafe(32)
+    session_token = token_urlsafe(32)
+
+    def client_key(request: Request) -> str:
+        return request.client.host if request.client else "unknown"
+
+    def is_authenticated(request: Request) -> bool:
+        return hmac.compare_digest(
+            request.cookies.get("dashboard_session", ""), session_token
+        )
+
+    def require_auth(request: Request) -> None:
+        if not is_authenticated(request):
+            raise StarletteHTTPException(401, "Please sign in to access the dashboard.")
+
+    def login_remaining(request: Request, now: float | None = None) -> int:
+        key = client_key(request)
+        timestamp = time.monotonic() if now is None else now
+        failures = app.state.login_failures
+        entry = failures.get(key)
+        if entry is None:
+            return 0
+        count, blocked_until = entry
+        if blocked_until <= timestamp:
+            if count == 0:
+                failures.pop(key, None)
+            return 0
+        return int(blocked_until - timestamp + 0.999)
+
+    def record_login_failure(request: Request) -> None:
+        failures = app.state.login_failures
+        key = client_key(request)
+        now = time.monotonic()
+        count, blocked_until = failures.get(key, (0, 0.0))
+        if blocked_until > now:
+            return
+        count += 1
+        if count >= LOGIN_FAILURE_LIMIT:
+            blocked_until = now + app.state.login_cooldown_seconds
+            count = 0
+        failures[key] = (count, blocked_until)
+        failures.move_to_end(key)
+        while len(failures) > LOGIN_CLIENT_LIMIT:
+            failures.popitem(last=False)
 
     def query(sql: str, params: tuple = ()) -> list[sqlite3.Row]:
         try:
@@ -288,8 +381,12 @@ def create_app(publications_path: Path | None = None) -> FastAPI:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> Response:
+        if exc.status_code == 401 and request.url.path != LOGIN_PATH:
+            return RedirectResponse(LOGIN_PATH, status_code=303)
         if "application/json" in request.headers.get("accept", ""):
-            return JSONResponse({"detail": str(exc.detail)}, status_code=exc.status_code)
+            return JSONResponse(
+                {"detail": str(exc.detail)}, status_code=exc.status_code
+            )
         body = (
             f'<h1 class="text-2xl font-semibold">Error {exc.status_code}</h1>'
             f'<p class="mt-2 text-slate-700">{escape(str(exc.detail))}</p>'
@@ -309,15 +406,67 @@ def create_app(publications_path: Path | None = None) -> FastAPI:
             status_code=422,
         )
 
+    @app.get(LOGIN_PATH, response_class=HTMLResponse, include_in_schema=False)
+    def login_page(request: Request) -> Response:
+        if is_authenticated(request):
+            return RedirectResponse("/publications", status_code=303)
+        return _render_login()
+
+    @app.post(LOGIN_PATH, include_in_schema=False)
+    async def login(request: Request) -> Response:
+        remaining = login_remaining(request)
+        if remaining:
+            response = _render_login(
+                f"Too many failed attempts. Try again in {remaining} seconds."
+            )
+            response.status_code = 429
+            response.headers["Retry-After"] = str(remaining)
+            return response
+
+        form = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        supplied_password = form.get("password", [""])[0].encode("utf-8")
+        supplied_hash = hashlib.sha256(supplied_password).digest()
+        if hmac.compare_digest(supplied_hash, app.state.login_password_hash):
+            app.state.login_failures.pop(client_key(request), None)
+            response = RedirectResponse("/publications", status_code=303)
+            response.set_cookie(
+                "dashboard_session",
+                session_token,
+                httponly=True,
+                samesite="strict",
+                secure=request.url.scheme == "https",
+                path="/",
+            )
+            return response
+
+        record_login_failure(request)
+        remaining = login_remaining(request)
+        if remaining:
+            response = _render_login(
+                f"Too many failed attempts. Try again in {remaining} seconds."
+            )
+            response.status_code = 429
+            response.headers["Retry-After"] = str(remaining)
+            return response
+        return _render_login("Incorrect password.")
+
+    @app.post("/logout", include_in_schema=False)
+    def logout() -> RedirectResponse:
+        response = RedirectResponse(LOGIN_PATH, status_code=303)
+        response.delete_cookie("dashboard_session", path="/")
+        return response
+
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:
         return RedirectResponse("/publications", status_code=307)
 
     @app.get("/publications", response_class=HTMLResponse, include_in_schema=False)
     def list_publications(
+        request: Request,
         page: int = Query(1, ge=1, le=1_000_000),
         per_page: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     ) -> HTMLResponse:
+        require_auth(request)
         total = unread_count()
         rows = query(
             """
@@ -332,12 +481,16 @@ def create_app(publications_path: Path | None = None) -> FastAPI:
         return _layout(
             "Unread publications",
             _render_list(rows, total, page, per_page, csrf_token),
+            show_logout=True,
         )
 
     @app.get(
         "/publications/{paper_id}", response_class=HTMLResponse, include_in_schema=False
     )
-    def publication_detail(paper_id: int = PathParam(ge=1)) -> HTMLResponse:
+    def publication_detail(
+        request: Request, paper_id: int = PathParam(ge=1)
+    ) -> HTMLResponse:
+        require_auth(request)
         rows = query(
             """
             SELECT id, title, data, authors, link, email_title, year, status,
@@ -348,12 +501,15 @@ def create_app(publications_path: Path | None = None) -> FastAPI:
         )
         if not rows:
             raise StarletteHTTPException(404, "Unread publication not found.")
-        return _layout(rows[0]["title"], _render_detail(rows[0], csrf_token))
+        return _layout(
+            rows[0]["title"], _render_detail(rows[0], csrf_token), show_logout=True
+        )
 
     @app.post("/publications/{paper_id}", include_in_schema=False)
     async def mark_publication_read(
         request: Request, paper_id: int = PathParam(ge=1)
     ) -> Response:
+        require_auth(request)
         form = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
         if form.get("csrf_token", [None])[0] != csrf_token:
             raise StarletteHTTPException(403, "Invalid form token.")

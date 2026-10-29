@@ -45,3 +45,6 @@ default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[tool.pixi.feature.dev.dependencies]
+httpx = "==0.28.1"
